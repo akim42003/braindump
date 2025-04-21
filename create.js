@@ -29,6 +29,6 @@ async function submitPost() {
     alert("Post created successfully!");
 
     // Optionally redirect to main blog page
-    window.location.href = "index.html";
+    // window.location.href = "index.html";
   }
 }
