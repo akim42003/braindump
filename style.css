@@ -36,3 +36,28 @@ header {
     font-family: Arial, Helvetica, sans-serif;
     color: black;
 }
+
+#new-post {
+    padding: 2rem;
+    background: #fff;
+    margin-bottom: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+}
+
+#new-post input,
+#new-post textarea {
+    width: 100%;
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    font-size: 1rem;
+}
+
+#new-post button {
+    padding: 0.5rem 1rem;
+    background-color: #333;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
