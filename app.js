@@ -17,7 +17,7 @@ function createPostElement(post) {
 
   postElement.innerHTML = `
     <h2>${post.title}</h2>
-    <small>${post.created_at ? new Date(post.created_at).toLocaleDateString() : post.date}</small>
+    <small>${post.created_at ? new Date(post.created_at).toLocaleString() : post.date}</small>
     <div>${post.content}</div>
   `;
 
