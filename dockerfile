@@ -1,6 +1,8 @@
 # Use a very small web server image
 FROM nginx:alpine
 
+#Remove default Nginx content (optional but clean)
+RUN rm -rf /usr/share/nginx/html/*
 # Copy your public folder into nginx's default html folder
 COPY public/ /usr/share/nginx/html/
 
