@@ -12,10 +12,21 @@ header {
     text-align: center;
 }
 
+navbar {
+    background: #333;
+    color: white;
+    padding: 1rem;
+}
+
 .button-container {
     display: flex;
     justify-content: center;
     margin: 2rem 0;
+    padding: 1rem;
+}
+
+#filter-bar button.active {
+    background-color: #555;
 }
 
 button {
