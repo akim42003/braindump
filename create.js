@@ -2,6 +2,14 @@ const supabase_client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 document.getElementById("submit-post").addEventListener("click", submitPost);
 
+const contentInput = document.getElementById("content");
+contentInput.addEventListener("input", autoResize);
+
+function autoResize() {
+  this.style.height = "auto"; // reset the height
+  this.style.height = this.scrollHeight + "px"; // set to full content height
+}
+
 async function submitPost() {
   console.log("test");
   const title = document.getElementById("title").value.trim();

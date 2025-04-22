@@ -60,12 +60,21 @@ button {
     box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
 }
 
-#new-post input,
+#new-post input {
+    width: 100%;
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    font-size: 1rem;
+}
+
 #new-post textarea {
     width: 100%;
     margin-bottom: 1rem;
     padding: 0.5rem;
     font-size: 1rem;
+    resize: none; /* optional: disables manual dragging */
+    overflow: hidden; /* hide scrollbars */
+    min-height: 100px; /* optional: set a starting height */
 }
 
 #new-post button {
