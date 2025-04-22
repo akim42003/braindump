@@ -25,6 +25,12 @@ navbar {
     padding: 1rem;
 }
 
+#filter-bar {
+    display: flex;
+    justify-content: center;
+    gap: 1rem; /* <-- adds 1rem of space between each button */
+}
+
 #filter-bar button.active {
     background-color: #555;
 }
