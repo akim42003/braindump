@@ -8,7 +8,7 @@ const filterBar = document.getElementById("filter-bar");
 let page = 0;
 const pageSize = 10;
 let currentCategory = ""; // '' means “All”
-let ascending = false; // false → newest first
+let ascending = false; // false = newest first
 
 loadMoreBtn.addEventListener("click", () => {
   page++;
@@ -16,16 +16,16 @@ loadMoreBtn.addEventListener("click", () => {
 });
 
 //  Event: Category filter
-filterBar.addEventListener("click", (e) => {
-  if (e.target.tagName !== "BUTTON") return;
+filterBar.addEventListener("click", (event) => {
+  if (event.target.tagName !== "BUTTON") return;
   // Highlight active button
   filterBar
     .querySelectorAll("button")
-    .forEach((b) => b.classList.remove("active"));
-  e.target.classList.add("active");
+    .forEach((button) => button.classList.remove("active"));
+  event.target.classList.add("active");
 
   // Update filter and reset paging
-  currentCategory = e.target.dataset.cat || "";
+  currentCategory = event.target.dataset.cat || "";
   page = 0;
   loadPosts(false);
 });
@@ -79,5 +79,5 @@ async function loadPosts(append = false) {
   }
 }
 
-// 9. Initial fetch
+// initial fetch
 loadPosts();
