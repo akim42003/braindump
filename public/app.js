@@ -39,7 +39,7 @@ function createPostElement(post) {
     <h2>${post.title}</h2>
     <small>${
       post.created_at ? new Date(post.created_at).toLocaleString() : post.date
-    } • ${post.category}</small>
+    } - ${post.category}</small>
     <div>${post.content}</div>
   `;
   return postElement;
