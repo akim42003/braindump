@@ -3,3 +3,4 @@ services:
     build: .
     ports:
       - "1000:80"
+    image: akim42003/braindump:0.1.1
