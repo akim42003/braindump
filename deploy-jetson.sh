@@ -1,57 +1,27 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
+COMPOSE="docker-compose -f docker-compose.prod.yml"
 
-# Deployment script for Jetson
-echo "Deploying Braindump to Jetson..."
-
-# Pull latest images
-echo "Pulling latest images..."
+echo "Pulling images…"
 docker pull akim42003/braindump-frontend:0.1.2
 docker pull akim42003/braindump-backend:0.1.0
 docker pull postgres:15-alpine
 
-# Stop existing containers
-echo "Stopping existing containers..."
-docker-compose -f docker-compose.prod.yml down
+echo "Tearing down old stack…"
+$COMPOSE down
 
-# Start services
-echo "Starting services..."
-docker-compose -f docker-compose.prod.yml up -d
+echo "Starting only Postgres…"
+$COMPOSE up -d db          # or postgres
 
-# Wait for services to be ready
-echo "Waiting for services to start..."
-sleep 20
+# Wait for Postgres to accept connections
+until $COMPOSE exec -T db pg_isready -U postgres > /dev/null 2>&1; do
+  sleep 1
+done
 
-# Initialize database schema
-echo "Initializing database..."
-docker-compose -f docker-compose.prod.yml exec -T postgres psql -U postgres -d braindump <<EOF
-CREATE TABLE IF NOT EXISTS blog_posts (
-    id SERIAL PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
-    content TEXT NOT NULL,
-    category VARCHAR(50) DEFAULT 'thought',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+echo "Applying schema…"
+# run with method A or B from above
+docker run --rm -i --network "$($COMPOSE ps -q | xargs docker inspect -f '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}' | head -n1)" \
+       postgres:15-alpine psql -h db -U postgres -d braindump -f /schema.sql
 
-CREATE INDEX IF NOT EXISTS idx_blog_posts_category ON blog_posts(category);
-CREATE INDEX IF NOT EXISTS idx_blog_posts_created_at ON blog_posts(created_at);
-EOF
-
-# Check container status
-echo "Container status..."
-docker-compose -f docker-compose.prod.yml ps
-
-# Check health with more verbose output
-echo "Health check..."
-echo "Testing backend..."
-curl -f http://localhost:3000/health && echo "Backend OK" || echo "Backend failed"
-echo "Testing frontend..."
-curl -f http://localhost:1000 && echo "Frontend OK" || echo "Frontend failed"
-
-# Show logs if health checks fail
-echo "Recent logs:"
-docker-compose -f docker-compose.prod.yml logs --tail=20
-
-echo "Deployment complete!"
-echo "Frontend: http://localhost:1000"
-echo "Backend API: http://localhost:3000/api"
-echo "Database: localhost:5432"
+echo "Starting the rest of the stack…"
+$COMPOSE up -d frontend backend
