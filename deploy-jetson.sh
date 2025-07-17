@@ -196,6 +196,37 @@ deploy_services() {
     log_success "All services deployed"
 }
 
+# Run database migration
+run_migration() {
+    log_info "Checking for database migration..."
+    
+    # Check if migration environment variables are set
+    if [[ -f backend/.env ]]; then
+        source backend/.env
+    fi
+    
+    if [[ -n "${SUPABASE_URL}" ]] && [[ -n "${SUPABASE_ANON_KEY}" ]]; then
+        log_info "Supabase credentials found, running migration..."
+        
+        # Wait a bit more to ensure backend is fully ready
+        sleep 5
+        
+        # Run migration inside the backend container
+        if docker-compose -f "$COMPOSE_FILE" exec -T backend node migrate.js; then
+            log_success "Database migration completed successfully"
+        else
+            log_warning "Database migration failed, but deployment will continue"
+            log_info "You can run migration manually later with:"
+            log_info "  docker-compose -f $COMPOSE_FILE exec backend node migrate.js"
+        fi
+    else
+        log_info "No Supabase credentials found, skipping migration"
+        log_info "To migrate data from Supabase, create backend/.env with:"
+        log_info "  SUPABASE_URL=your_supabase_url"
+        log_info "  SUPABASE_ANON_KEY=your_supabase_anon_key"
+    fi
+}
+
 # Verify deployment
 verify_deployment() {
     log_info "Verifying deployment..."
@@ -253,6 +284,7 @@ main() {
     build_images
     cleanup_existing
     deploy_services
+    run_migration
     verify_deployment
     
     echo
