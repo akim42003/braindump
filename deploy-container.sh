@@ -113,8 +113,46 @@ pull_images() {
 # Clean up existing deployment
 cleanup_existing() {
     log_info "Cleaning up existing deployment..."
+    
+    # Stop and remove containers using the compose file
     docker-compose -f "$COMPOSE_FILE" down --remove-orphans || true
+    
+    # Force stop any containers that might be using our ports
+    log_info "Checking for containers using ports 1000, 3000, 5432..."
+    
+    # Find and stop containers using port 5432 (PostgreSQL)
+    for container in $(docker ps -q --filter "publish=5432"); do
+        log_info "Stopping container using port 5432: $container"
+        docker stop "$container" || true
+        docker rm "$container" || true
+    done
+    
+    # Find and stop containers using port 3000 (Backend)
+    for container in $(docker ps -q --filter "publish=3000"); do
+        log_info "Stopping container using port 3000: $container"
+        docker stop "$container" || true
+        docker rm "$container" || true
+    done
+    
+    # Find and stop containers using port 1000 (Frontend)
+    for container in $(docker ps -q --filter "publish=1000"); do
+        log_info "Stopping container using port 1000: $container"
+        docker stop "$container" || true
+        docker rm "$container" || true
+    done
+    
+    # Also check for any containers with our application names
+    for name in postgres backend frontend braindump; do
+        if docker ps -a --format "table {{.Names}}" | grep -q "$name"; then
+            log_info "Stopping container with name containing '$name'"
+            docker ps -a --format "table {{.Names}}" | grep "$name" | xargs -r docker stop || true
+            docker ps -a --format "table {{.Names}}" | grep "$name" | xargs -r docker rm || true
+        fi
+    done
+    
+    # Clean up unused resources
     docker system prune -f || true
+    
     log_success "Cleanup completed"
 }
 
