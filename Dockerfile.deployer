@@ -9,7 +9,9 @@ RUN apk add --no-cache \
     curl \
     bash \
     grep \
-    coreutils
+    coreutils \
+    net-tools \
+    iproute2
 
 # Create app directory
 WORKDIR /app

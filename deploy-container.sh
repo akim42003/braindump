@@ -114,44 +114,60 @@ pull_images() {
 cleanup_existing() {
     log_info "Cleaning up existing deployment..."
     
-    # Stop and remove containers using the compose file
-    docker-compose -f "$COMPOSE_FILE" down --remove-orphans || true
+    # Stop and remove containers using the compose file first
+    docker-compose -f "$COMPOSE_FILE" down --remove-orphans 2>/dev/null || true
     
-    # Force stop any containers that might be using our ports
-    log_info "Checking for containers using ports 1000, 3000, 5432..."
+    # Wait a moment for containers to stop
+    sleep 2
     
-    # Find and stop containers using port 5432 (PostgreSQL)
-    for container in $(docker ps -q --filter "publish=5432"); do
-        log_info "Stopping container using port 5432: $container"
-        docker stop "$container" || true
-        docker rm "$container" || true
-    done
+    # Check if ports are still in use and force cleanup if needed
+    log_info "Checking for port conflicts..."
     
-    # Find and stop containers using port 3000 (Backend)
-    for container in $(docker ps -q --filter "publish=3000"); do
-        log_info "Stopping container using port 3000: $container"
-        docker stop "$container" || true
-        docker rm "$container" || true
-    done
+    # Check port 5432 (PostgreSQL)
+    if netstat -ln 2>/dev/null | grep -q ":5432 " || ss -ln 2>/dev/null | grep -q ":5432 "; then
+        log_info "Port 5432 still in use, finding and stopping containers..."
+        docker ps -q --filter "publish=5432" | xargs -r docker stop 2>/dev/null || true
+        docker ps -aq --filter "publish=5432" | xargs -r docker rm 2>/dev/null || true
+    fi
     
-    # Find and stop containers using port 1000 (Frontend)
-    for container in $(docker ps -q --filter "publish=1000"); do
-        log_info "Stopping container using port 1000: $container"
-        docker stop "$container" || true
-        docker rm "$container" || true
-    done
+    # Check port 3000 (Backend)
+    if netstat -ln 2>/dev/null | grep -q ":3000 " || ss -ln 2>/dev/null | grep -q ":3000 "; then
+        log_info "Port 3000 still in use, finding and stopping containers..."
+        docker ps -q --filter "publish=3000" | xargs -r docker stop 2>/dev/null || true
+        docker ps -aq --filter "publish=3000" | xargs -r docker rm 2>/dev/null || true
+    fi
     
-    # Also check for any containers with our application names
-    for name in postgres backend frontend braindump; do
-        if docker ps -a --format "table {{.Names}}" | grep -q "$name"; then
-            log_info "Stopping container with name containing '$name'"
-            docker ps -a --format "table {{.Names}}" | grep "$name" | xargs -r docker stop || true
-            docker ps -a --format "table {{.Names}}" | grep "$name" | xargs -r docker rm || true
-        fi
-    done
+    # Check port 1000 (Frontend)
+    if netstat -ln 2>/dev/null | grep -q ":1000 " || ss -ln 2>/dev/null | grep -q ":1000 "; then
+        log_info "Port 1000 still in use, finding and stopping containers..."
+        docker ps -q --filter "publish=1000" | xargs -r docker stop 2>/dev/null || true
+        docker ps -aq --filter "publish=1000" | xargs -r docker rm 2>/dev/null || true
+    fi
     
-    # Clean up unused resources
-    docker system prune -f || true
+    # Final verification
+    sleep 2
+    local ports_clear=true
+    
+    if netstat -ln 2>/dev/null | grep -q ":5432 " || ss -ln 2>/dev/null | grep -q ":5432 "; then
+        log_warning "Port 5432 still in use after cleanup"
+        ports_clear=false
+    fi
+    
+    if netstat -ln 2>/dev/null | grep -q ":3000 " || ss -ln 2>/dev/null | grep -q ":3000 "; then
+        log_warning "Port 3000 still in use after cleanup"
+        ports_clear=false
+    fi
+    
+    if netstat -ln 2>/dev/null | grep -q ":1000 " || ss -ln 2>/dev/null | grep -q ":1000 "; then
+        log_warning "Port 1000 still in use after cleanup"
+        ports_clear=false
+    fi
+    
+    if [[ "$ports_clear" == true ]]; then
+        log_success "All ports cleared successfully"
+    else
+        log_warning "Some ports may still be in use, but continuing deployment..."
+    fi
     
     log_success "Cleanup completed"
 }
