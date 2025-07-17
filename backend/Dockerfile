@@ -1,8 +1,8 @@
 # Multi-platform build supporting ARM64 for Jetson Nano
 FROM node:18-alpine
 
-# Install curl for health checks and build dependencies for ARM64
-RUN apk add --no-cache curl python3 make g++ gcc
+# Install build dependencies for ARM64 (if needed for npm packages)
+RUN apk add --no-cache python3 make g++ gcc
 
 WORKDIR /app
 
@@ -26,8 +26,8 @@ USER nodejs
 
 EXPOSE 3000
 
-# Health check
+# Health check using wget (included in alpine by default)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD curl -f http://localhost:3000/health || exit 1
+    CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
 
 CMD ["npm", "start"]

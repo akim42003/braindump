@@ -13,7 +13,7 @@ BLUE='\033[0;34m'
 NC='\033[0m'
 
 # Configuration
-COMPOSE_FILE="docker-compose.jetson.yml"
+COMPOSE_FILE="docker-compose.jetson-simple.yml"
 JETPACK_VERSION=$(cat /etc/nv_tegra_release 2>/dev/null | grep -o "R[0-9]*" || echo "Unknown")
 
 log_info() {
@@ -100,39 +100,19 @@ check_docker() {
 
 # Optimize system for deployment
 optimize_system() {
-    log_info "Optimizing system for deployment..."
+    log_info "Checking system optimization..."
     
-    # Increase swap if needed
-    if [[ $(free -m | awk 'NR==3{print $2}') -lt 2048 ]]; then
-        log_info "Swap space is low, consider adding more swap"
-        log_info "Run: sudo fallocate -l 2G /swapfile && sudo chmod 600 /swapfile && sudo mkswap /swapfile && sudo swapon /swapfile"
+    # Check swap space
+    SWAP_SIZE=$(free -m | awk 'NR==3{print $2}')
+    if [[ $SWAP_SIZE -lt 2048 ]]; then
+        log_warning "Swap space is low (${SWAP_SIZE}MB), consider adding more swap"
+        log_info "To add swap: sudo fallocate -l 2G /swapfile && sudo chmod 600 /swapfile && sudo mkswap /swapfile && sudo swapon /swapfile"
+    else
+        log_success "Swap space is adequate: ${SWAP_SIZE}MB"
     fi
     
-    # Set Docker daemon options for ARM64
-    if [[ ! -f /etc/docker/daemon.json ]]; then
-        log_info "Creating Docker daemon configuration for Jetson..."
-        sudo tee /etc/docker/daemon.json > /dev/null <<EOF
-{
-    "default-runtime": "nvidia",
-    "runtimes": {
-        "nvidia": {
-            "path": "nvidia-container-runtime",
-            "runtimeArgs": []
-        }
-    },
-    "log-driver": "json-file",
-    "log-opts": {
-        "max-size": "10m",
-        "max-file": "3"
-    }
-}
-EOF
-        log_info "Restarting Docker daemon..."
-        sudo systemctl restart docker
-        sleep 5
-    fi
-    
-    log_success "System optimization completed"
+    # Docker is already configured, no need to modify daemon.json
+    log_success "System check completed"
 }
 
 # Build images locally to ensure ARM64 compatibility
