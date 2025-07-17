@@ -1,27 +1,37 @@
 #!/usr/bin/env bash
 set -euo pipefail
+
+ENV_FILE=".env"
+export $(grep -v '^#' "$ENV_FILE" | xargs)
+
 COMPOSE="docker-compose -f docker-compose.prod.yml"
 
 echo "Pulling images…"
-docker pull akim42003/braindump-frontend:0.1.2
-docker pull akim42003/braindump-backend:0.1.0
-docker pull postgres:15-alpine
+docker pull akim42003/braindump-frontend:0.1.2 \
+           akim42003/braindump-backend:0.1.0 \
+           postgres:15-alpine
 
-echo "Tearing down old stack…"
+echo "Recreating stack…"
 $COMPOSE down
+$COMPOSE up -d postgres
 
-echo "Starting only Postgres…"
-$COMPOSE up -d postgres         # or postgres
-
-# Wait for Postgres to accept connections
-until $COMPOSE exec -T postgres pg_isready -U postgres > /dev/null 2>&1; do
+echo "Waiting for Postgres…"
+until $COMPOSE exec -T postgres pg_isready -U "$POSTGRES_USER" >/dev/null 2>&1; do
   sleep 1
 done
 
-echo "Applying schema…"
-# run with method A or B from above
-docker run --rm -i --network "$($COMPOSE ps -q | xargs docker inspect -f '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}' | head -n1)" \
-       postgres:15-alpine psql -h postgres -U postgres -d braindump -f /schema.sql
+$COMPOSE exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" <<'SQL'
+CREATE TABLE IF NOT EXISTS blog_posts (
+  id SERIAL PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  content TEXT NOT NULL,
+  category VARCHAR(50) DEFAULT 'thought',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_blog_posts_category    ON blog_posts(category);
+CREATE INDEX IF NOT EXISTS idx_blog_posts_created_at  ON blog_posts(created_at);
+SQL
 
-echo "Starting the rest of the stack…"
-$COMPOSE up -d frontend backend
+echo "Starting backend & frontend…"
+$COMPOSE up -d backend frontend
+$COMPOSE ps
