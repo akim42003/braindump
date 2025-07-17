@@ -48,16 +48,25 @@ check_docker() {
 load_env() {
     if [[ -f "$ENV_FILE" ]]; then
         log_info "Loading environment from $ENV_FILE"
+        # Export variables from .env file, filtering out comments and empty lines
         set -a
-        source "$ENV_FILE"
+        while IFS='=' read -r key value; do
+            # Skip comments and empty lines
+            if [[ ! "$key" =~ ^[[:space:]]*# ]] && [[ -n "$key" ]]; then
+                # Remove any quotes from value
+                value="${value%\"}"
+                value="${value#\"}"
+                export "$key"="$value"
+            fi
+        done < <(grep -v '^[[:space:]]*#' "$ENV_FILE" | grep -v '^[[:space:]]*$')
         set +a
     else
         log_warning "Environment file $ENV_FILE not found, using defaults"
     fi
     
-    export POSTGRES_USER=${POSTGRES_USER:-postgres}
-    export POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}
-    export POSTGRES_DB=${POSTGRES_DB:-braindump}
+    export POSTGRES_USER=${DB_USER:-${POSTGRES_USER:-postgres}}
+    export POSTGRES_PASSWORD=${DB_PASSWORD:-${POSTGRES_PASSWORD:-password}}
+    export POSTGRES_DB=${DB_NAME:-${POSTGRES_DB:-braindump}}
     
     log_info "Environment loaded: DB=$POSTGRES_DB, User=$POSTGRES_USER"
 }
