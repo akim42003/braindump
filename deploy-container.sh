@@ -50,15 +50,24 @@ load_env() {
         log_info "Loading environment from $ENV_FILE"
         # Export variables from .env file, filtering out comments and empty lines
         set -a
-        while IFS='=' read -r key value; do
+        while IFS= read -r line; do
             # Skip comments and empty lines
-            if [[ ! "$key" =~ ^[[:space:]]*# ]] && [[ -n "$key" ]]; then
-                # Remove any quotes from value
-                value="${value%\"}"
-                value="${value#\"}"
-                export "$key"="$value"
+            if [[ ! "$line" =~ ^[[:space:]]*# ]] && [[ -n "$line" ]]; then
+                # Split on first equals sign, handling spaces
+                if [[ "$line" =~ ^[[:space:]]*([^=]+)[[:space:]]*=[[:space:]]*(.*)$ ]]; then
+                    key="${BASH_REMATCH[1]}"
+                    value="${BASH_REMATCH[2]}"
+                    # Trim whitespace from key
+                    key=$(echo "$key" | xargs)
+                    # Remove quotes from value and trim whitespace
+                    value=$(echo "$value" | sed 's/^[[:space:]]*"//; s/"[[:space:]]*$//' | xargs)
+                    # Export only if key is valid
+                    if [[ "$key" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]]; then
+                        export "$key"="$value"
+                    fi
+                fi
             fi
-        done < <(grep -v '^[[:space:]]*#' "$ENV_FILE" | grep -v '^[[:space:]]*$')
+        done < "$ENV_FILE"
         set +a
     else
         log_warning "Environment file $ENV_FILE not found, using defaults"
