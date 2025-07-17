@@ -12,7 +12,9 @@ services:
     cpus: 0.5
   
   backend:
-    build: ./backend
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile.jetson
     ports:
       - "3000:3000"
     depends_on:

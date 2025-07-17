@@ -1,16 +1,16 @@
 # Multi-platform build supporting ARM64 for Jetson Nano
 FROM node:18-alpine
 
-# Install curl for health checks
-RUN apk add --no-cache curl
+# Install curl for health checks and build dependencies for ARM64
+RUN apk add --no-cache curl python3 make g++ gcc
 
 WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies with npm cache optimization for ARM64
-RUN npm ci --only=production && npm cache clean --force
+# Install dependencies using npm install instead of ci for better ARM64 compatibility
+RUN npm install --production --no-audit --no-fund && npm cache clean --force
 
 # Copy application code
 COPY . .
