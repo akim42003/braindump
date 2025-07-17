@@ -19,8 +19,8 @@ docker pull "$IMAGE"
 # Run container
 echo "Starting container..."
 docker run -d \
-  -p 80:80 \
-  -p 3000:3000 \
+  -p 1000:80 \
+  -p 8001:3000 \
   --name braindump \
   --restart unless-stopped \
   -v braindump_data:/var/lib/postgresql/data \
@@ -31,14 +31,14 @@ sleep 20
 
 # Check if running
 if docker ps | grep -q braindump; then
-    echo "✅ Braindump is running!"
+    echo "Braindump is running!"
     echo ""
     echo "Access your blog at:"
-    echo "  http://$(hostname -I | awk '{print $1}')"
-    echo "  http://localhost"
+    echo "  http://$(hostname -I | awk '{print $1}'):1000"
+    echo "  http://localhost:1000"
     echo ""
-    echo "API endpoint: http://localhost:3000"
+    echo "API endpoint: http://localhost:8001"
 else
-    echo "❌ Failed to start Braindump"
+    echo "Failed to start Braindump"
     docker logs braindump
 fi
