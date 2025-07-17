@@ -1,8 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ENV_FILE=".env"
-export $(grep -v '^#' "$ENV_FILE" | xargs)
+ENV_FILE="backend/.env"
+if [ -f "$ENV_FILE" ]; then
+    export $(grep -v '^#' "$ENV_FILE" | xargs)
+fi
+
+# Set PostgreSQL variables from docker-compose or .env
+POSTGRES_USER=${POSTGRES_USER:-postgres}
+POSTGRES_DB=${POSTGRES_DB:-braindump}
 
 COMPOSE="docker-compose -f docker-compose.prod.yml"
 
