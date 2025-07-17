@@ -11,7 +11,7 @@ echo "Tearing down old stack…"
 $COMPOSE down
 
 echo "Starting only Postgres…"
-$COMPOSE up -d db          # or postgres
+$COMPOSE up -d postgres         # or postgres
 
 # Wait for Postgres to accept connections
 until $COMPOSE exec -T db pg_isready -U postgres > /dev/null 2>&1; do
