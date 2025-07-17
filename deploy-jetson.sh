@@ -11,11 +11,11 @@ docker pull postgres:15-alpine
 
 # Stop existing containers
 echo "Stopping existing containers..."
-docker-compose -f docker-compose.prod.yml down
+docker compose -f docker-compose.prod.yml down
 
 # Start services
 echo "Starting services..."
-docker-compose -f docker-compose.prod.yml up -d
+docker compose -f docker-compose.prod.yml up -d
 
 # Wait for services to be ready
 echo "Waiting for services to start..."
