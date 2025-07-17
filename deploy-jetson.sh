@@ -221,8 +221,16 @@ run_migration() {
     if [[ -n "${SUPABASE_URL}" ]] && [[ -n "${SUPABASE_ANON_KEY}" ]]; then
         log_info "Supabase credentials found, running migration..."
         
+        # Check if backend container is running
+        if ! docker-compose -f "$COMPOSE_FILE" ps | grep -q "backend.*Up"; then
+            log_warning "Backend container is not running, skipping migration"
+            log_info "Run migration manually after deployment with: ./migrate-jetson.sh"
+            return
+        fi
+        
         # Wait a bit more to ensure backend is fully ready
-        sleep 5
+        log_info "Waiting for backend to be fully ready..."
+        sleep 10
         
         # Run migration inside the backend container with env variables
         if docker-compose -f "$COMPOSE_FILE" exec -T \
@@ -233,7 +241,7 @@ run_migration() {
         else
             log_warning "Database migration failed, but deployment will continue"
             log_info "You can run migration manually later with:"
-            log_info "  docker-compose -f $COMPOSE_FILE exec -e SUPABASE_URL='${SUPABASE_URL}' -e SUPABASE_ANON_KEY='${SUPABASE_ANON_KEY}' backend node migrate.js"
+            log_info "  ./migrate-jetson.sh"
         fi
     else
         log_info "No Supabase credentials found, skipping migration"
