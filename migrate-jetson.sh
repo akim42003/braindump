@@ -65,9 +65,12 @@ run_migration() {
     
     log_info "Supabase URL: ${SUPABASE_URL}"
     
-    # Run migration
+    # Run migration with environment variables
     log_info "Executing migration script..."
-    if docker-compose -f "$COMPOSE_FILE" exec -T backend node migrate.js; then
+    if docker-compose -f "$COMPOSE_FILE" exec -T \
+        -e SUPABASE_URL="${SUPABASE_URL}" \
+        -e SUPABASE_ANON_KEY="${SUPABASE_ANON_KEY}" \
+        backend node migrate.js; then
         log_success "Migration completed successfully!"
     else
         log_error "Migration failed!"

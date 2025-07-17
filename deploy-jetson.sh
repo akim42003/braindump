@@ -202,7 +202,20 @@ run_migration() {
     
     # Check if migration environment variables are set
     if [[ -f backend/.env ]]; then
-        source backend/.env
+        # Load .env file safely, ignoring comments and empty lines
+        while IFS='=' read -r key value; do
+            # Skip comments and empty lines
+            [[ -z "$key" || "$key" =~ ^[[:space:]]*# ]] && continue
+            # Remove quotes and whitespace
+            value="${value#\"}"
+            value="${value%\"}"
+            value="${value#\'}"
+            value="${value%\'}"
+            # Export only if key is valid
+            if [[ "$key" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
+                export "$key"="$value"
+            fi
+        done < backend/.env
     fi
     
     if [[ -n "${SUPABASE_URL}" ]] && [[ -n "${SUPABASE_ANON_KEY}" ]]; then
@@ -211,13 +224,16 @@ run_migration() {
         # Wait a bit more to ensure backend is fully ready
         sleep 5
         
-        # Run migration inside the backend container
-        if docker-compose -f "$COMPOSE_FILE" exec -T backend node migrate.js; then
+        # Run migration inside the backend container with env variables
+        if docker-compose -f "$COMPOSE_FILE" exec -T \
+            -e SUPABASE_URL="${SUPABASE_URL}" \
+            -e SUPABASE_ANON_KEY="${SUPABASE_ANON_KEY}" \
+            backend node migrate.js; then
             log_success "Database migration completed successfully"
         else
             log_warning "Database migration failed, but deployment will continue"
             log_info "You can run migration manually later with:"
-            log_info "  docker-compose -f $COMPOSE_FILE exec backend node migrate.js"
+            log_info "  docker-compose -f $COMPOSE_FILE exec -e SUPABASE_URL='${SUPABASE_URL}' -e SUPABASE_ANON_KEY='${SUPABASE_ANON_KEY}' backend node migrate.js"
         fi
     else
         log_info "No Supabase credentials found, skipping migration"
