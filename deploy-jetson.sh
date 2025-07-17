@@ -23,8 +23,8 @@ sleep 10
 
 # Check health
 echo "Health check..."
-curl -f http://localhost:3000/health || echo "❌ Backend health check failed"
-curl -f http://localhost:1000 || echo "❌ Frontend health check failed"
+curl -f http://localhost:3000/health || echo "Backend health check failed"
+curl -f http://localhost:1000 || echo "Frontend health check failed"
 
 echo "Deployment complete!"
 echo "Frontend: http://localhost:1000"
