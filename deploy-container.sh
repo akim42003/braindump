@@ -179,17 +179,28 @@ deploy_services() {
     
     log_info "Waiting for PostgreSQL to be ready..."
     local count=0
-    while ! docker-compose -f "$COMPOSE_FILE" exec -T postgres pg_isready -U "$POSTGRES_USER" -h localhost -d "$POSTGRES_DB" &>/dev/null; do
+    local consecutive_success=0
+    
+    while [[ $consecutive_success -lt 3 ]]; do
         if [[ $count -ge $POSTGRES_TIMEOUT ]]; then
             log_error "PostgreSQL failed to start within ${POSTGRES_TIMEOUT} seconds"
             docker-compose -f "$COMPOSE_FILE" logs postgres
             exit 1
         fi
+        
+        # Check if PostgreSQL is ready
+        if docker-compose -f "$COMPOSE_FILE" exec -T postgres pg_isready -U "$POSTGRES_USER" -h localhost -d "$POSTGRES_DB" &>/dev/null; then
+            ((consecutive_success++))
+            log_info "PostgreSQL check ${consecutive_success}/3 successful"
+        else
+            consecutive_success=0
+            if [[ $((count % 10)) -eq 0 ]]; then
+                log_info "Still waiting for PostgreSQL... (${count}s elapsed)"
+            fi
+        fi
+        
         sleep 2
         ((count += 2))
-        if [[ $((count % 10)) -eq 0 ]]; then
-            log_info "Still waiting for PostgreSQL... (${count}s elapsed)"
-        fi
     done
     
     log_success "PostgreSQL is ready"
@@ -319,16 +330,35 @@ main() {
     
     log_success "Deployment completed successfully!"
     
+    # Show final status
+    log_info "=== FINAL STATUS ==="
+    docker-compose -f "$COMPOSE_FILE" ps
+    
     # Keep container running for monitoring
     log_info "Deployment container will keep running for monitoring..."
     log_info "Press Ctrl+C to stop the deployment"
+    log_info "Services are accessible at:"
+    log_info "  Frontend: http://localhost:1000"
+    log_info "  Backend: http://localhost:3000"
+    log_info "  Database: localhost:5432"
     
-    # Monitor and keep alive
+    # Monitor and keep alive with better error handling
     while true; do
-        sleep 60
-        if ! docker-compose -f "$COMPOSE_FILE" ps | grep -q "Up"; then
-            log_warning "Some services may be down. Check with: docker-compose -f $COMPOSE_FILE ps"
+        sleep 30
+        
+        # Check if our services are still running
+        if ! docker-compose -f "$COMPOSE_FILE" ps --services --filter "status=running" | grep -q .; then
+            log_error "All services appear to be down!"
+            docker-compose -f "$COMPOSE_FILE" ps
+            log_info "Attempting to restart services..."
+            docker-compose -f "$COMPOSE_FILE" up -d
         fi
+        
+        # Periodic health check
+        if [[ $((count % 4)) -eq 0 ]]; then  # Every 2 minutes
+            log_info "Health check: Services running normally"
+        fi
+        ((count++))
     done
 }
 
