@@ -1,4 +1,6 @@
-const supabase_client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const API_BASE_URL = window.location.hostname === 'localhost' ? 
+  'http://localhost:3000/api' : 
+  `http://${window.location.hostname}:3000/api`;
 
 // 2. DOM refs
 const postsContainer = document.getElementById("posts-container");
@@ -51,31 +53,31 @@ async function loadPosts(append = false) {
     loadMoreBtn.style.display = "inline-block";
   }
 
-  let query = supabase_client
-    .from("Blog Posts")
-    .select("*")
-    .order("created_at", { ascending });
+  try {
+    let url = `${API_BASE_URL}/posts?page=${page}&limit=${pageSize}&ascending=${ascending}`;
+    
+    if (currentCategory) {
+      url += `&category=${currentCategory}`;
+    }
 
-  if (currentCategory) {
-    query = query.eq("category", currentCategory);
-  }
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const posts = await response.json();
 
-  query = query.range(page * pageSize, (page + 1) * pageSize - 1);
+    // Append posts
+    posts.forEach((post) => {
+      postsContainer.appendChild(createPostElement(post));
+    });
 
-  const { data: posts, error } = await query;
-  if (error) {
+    // If fewer results than a full page, hide "Load More"
+    if (!posts || posts.length < pageSize) {
+      loadMoreBtn.style.display = "none";
+    }
+  } catch (error) {
     console.error("Error loading posts:", error);
-    return;
-  }
-
-  // Append posts
-  posts.forEach((post) => {
-    postsContainer.appendChild(createPostElement(post));
-  });
-
-  // If fewer results than a full page, hide “Load More”
-  if (!posts || posts.length < pageSize) {
-    loadMoreBtn.style.display = "none";
   }
 }
 

@@ -1,1 +1,6 @@
 public/config.js
+backend/.env
+backend/node_modules/
+backend/package-lock.json
+postgres_data/
+.DS_Store

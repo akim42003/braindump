@@ -1,4 +1,6 @@
-const supabase_client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const API_BASE_URL = window.location.hostname === 'localhost' ? 
+  'http://localhost:3000/api' : 
+  `http://${window.location.hostname}:3000/api`;
 
 document.getElementById("submit-post").addEventListener("click", submitPost);
 
@@ -23,27 +25,34 @@ async function submitPost() {
     return alert("Please fill out both the title and content.");
   }
 
-  //  Use supabase_client and destructure data & error
-  const { data, error } = await supabase_client
-    .from("Blog Posts")
-    .insert([{ title, content, category }]);
+  try {
+    const response = await fetch(`${API_BASE_URL}/posts`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ title, content, category }),
+    });
 
-  if (error) {
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log("Post submitted:", data);
+
+    //  Clear the form fields (including the category dropdown)
+    titleEl.value = "";
+    contentEl.value = "";
+    contentEl.style.height = ""; // reset auto-resize
+    categoryEl.selectedIndex = 0; // back to "Question" or whatever your first <option> is
+
+    alert("Post created successfully!");
+
+    //  Redirect back to index option
+    // window.location.href = "index.html";
+  } catch (error) {
     console.error("Error inserting post:", error.message);
     alert("Failed to submit post.");
-    return;
   }
-
-  console.log("Post submitted:", data);
-
-  //  Clear the form fields (including the category dropdown)
-  titleEl.value = "";
-  contentEl.value = "";
-  contentEl.style.height = ""; // reset auto-resize
-  categoryEl.selectedIndex = 0; // back to “Question” or whatever your first <option> is
-
-  alert("Post created successfully!");
-
-  //  Redirect back to index option
-  // window.location.href = "index.html";
 }
