@@ -19,12 +19,22 @@ docker compose -f docker-compose.prod.yml up -d
 
 # Wait for services to be ready
 echo "Waiting for services to start..."
-sleep 10
+sleep 20
 
-# Check health
+# Check container status
+echo "Container status..."
+docker compose -f docker-compose.prod.yml ps
+
+# Check health with more verbose output
 echo "Health check..."
-curl -f http://localhost:3000/health || echo "Backend health check failed"
-curl -f http://localhost:1000 || echo "Frontend health check failed"
+echo "Testing backend..."
+curl -f http://localhost:3000/health && echo "Backend OK" || echo "Backend failed"
+echo "Testing frontend..."
+curl -f http://localhost:1000 && echo "Frontend OK" || echo "Frontend failed"
+
+# Show logs if health checks fail
+echo "Recent logs:"
+docker compose -f docker-compose.prod.yml logs --tail=20
 
 echo "Deployment complete!"
 echo "Frontend: http://localhost:1000"
