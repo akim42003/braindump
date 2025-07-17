@@ -40,7 +40,7 @@ services:
       - POSTGRES_INITDB_ARGS=-N 50
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./backend/init-fixed.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "5432:5432"
     restart: unless-stopped
