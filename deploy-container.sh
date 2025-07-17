@@ -179,7 +179,7 @@ deploy_services() {
     
     log_info "Waiting for PostgreSQL to be ready..."
     local count=0
-    while ! docker-compose -f "$COMPOSE_FILE" exec -T postgres pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB" &>/dev/null; do
+    while ! docker-compose -f "$COMPOSE_FILE" exec -T postgres pg_isready -U "$POSTGRES_USER" -h localhost -d "$POSTGRES_DB" &>/dev/null; do
         if [[ $count -ge $POSTGRES_TIMEOUT ]]; then
             log_error "PostgreSQL failed to start within ${POSTGRES_TIMEOUT} seconds"
             docker-compose -f "$COMPOSE_FILE" logs postgres
@@ -196,7 +196,7 @@ deploy_services() {
     
     # Initialize database
     log_info "Initializing database..."
-    docker-compose -f "$COMPOSE_FILE" exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" <<'EOF'
+    docker-compose -f "$COMPOSE_FILE" exec -T postgres psql -U "$POSTGRES_USER" -h localhost -d "$POSTGRES_DB" <<'EOF'
 CREATE TABLE IF NOT EXISTS blog_posts (
     id SERIAL PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
