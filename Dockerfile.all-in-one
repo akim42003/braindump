@@ -1,0 +1,91 @@
+# All-in-one Dockerfile for Braindump
+FROM node:18-alpine
+
+# Install nginx and postgresql
+RUN apk add --no-cache nginx postgresql postgresql-client supervisor
+
+# Setup directories
+RUN mkdir -p /app/backend /app/frontend /var/lib/postgresql/data /run/postgresql
+RUN chown -R postgres:postgres /var/lib/postgresql /run/postgresql
+
+# Copy backend files
+WORKDIR /app/backend
+COPY backend/package*.json ./
+RUN npm install --production
+COPY backend/ ./
+
+# Copy frontend files
+WORKDIR /app/frontend
+COPY public/ ./
+
+# Setup nginx
+RUN rm -rf /etc/nginx/http.d/default.conf
+COPY nginx.conf /etc/nginx/http.d/default.conf
+
+# Setup PostgreSQL initialization
+COPY backend/init-fixed.sql /docker-entrypoint-initdb.d/
+
+# Create supervisor config
+RUN echo '[supervisord]' > /etc/supervisord.conf && \
+    echo 'nodaemon=true' >> /etc/supervisord.conf && \
+    echo 'user=root' >> /etc/supervisord.conf && \
+    echo '' >> /etc/supervisord.conf && \
+    echo '[program:postgres]' >> /etc/supervisord.conf && \
+    echo 'command=/usr/bin/postgres -D /var/lib/postgresql/data' >> /etc/supervisord.conf && \
+    echo 'user=postgres' >> /etc/supervisord.conf && \
+    echo 'autostart=true' >> /etc/supervisord.conf && \
+    echo 'autorestart=true' >> /etc/supervisord.conf && \
+    echo 'stdout_logfile=/dev/stdout' >> /etc/supervisord.conf && \
+    echo 'stdout_logfile_maxbytes=0' >> /etc/supervisord.conf && \
+    echo 'stderr_logfile=/dev/stderr' >> /etc/supervisord.conf && \
+    echo 'stderr_logfile_maxbytes=0' >> /etc/supervisord.conf && \
+    echo '' >> /etc/supervisord.conf && \
+    echo '[program:backend]' >> /etc/supervisord.conf && \
+    echo 'command=node /app/backend/server.js' >> /etc/supervisord.conf && \
+    echo 'directory=/app/backend' >> /etc/supervisord.conf && \
+    echo 'environment=DB_HOST="localhost",DB_USER="postgres",DB_PASSWORD="password",DB_NAME="braindump",DB_PORT="5432"' >> /etc/supervisord.conf && \
+    echo 'autostart=true' >> /etc/supervisord.conf && \
+    echo 'autorestart=true' >> /etc/supervisord.conf && \
+    echo 'startretries=10' >> /etc/supervisord.conf && \
+    echo 'startsecs=10' >> /etc/supervisord.conf && \
+    echo 'stdout_logfile=/dev/stdout' >> /etc/supervisord.conf && \
+    echo 'stdout_logfile_maxbytes=0' >> /etc/supervisord.conf && \
+    echo 'stderr_logfile=/dev/stderr' >> /etc/supervisord.conf && \
+    echo 'stderr_logfile_maxbytes=0' >> /etc/supervisord.conf && \
+    echo '' >> /etc/supervisord.conf && \
+    echo '[program:nginx]' >> /etc/supervisord.conf && \
+    echo 'command=/usr/sbin/nginx -g "daemon off;"' >> /etc/supervisord.conf && \
+    echo 'autostart=true' >> /etc/supervisord.conf && \
+    echo 'autorestart=true' >> /etc/supervisord.conf && \
+    echo 'stdout_logfile=/dev/stdout' >> /etc/supervisord.conf && \
+    echo 'stdout_logfile_maxbytes=0' >> /etc/supervisord.conf && \
+    echo 'stderr_logfile=/dev/stderr' >> /etc/supervisord.conf && \
+    echo 'stderr_logfile_maxbytes=0' >> /etc/supervisord.conf
+
+# Create startup script
+RUN echo '#!/bin/sh' > /start.sh && \
+    echo 'set -e' >> /start.sh && \
+    echo '' >> /start.sh && \
+    echo '# Initialize PostgreSQL if needed' >> /start.sh && \
+    echo 'if [ ! -s /var/lib/postgresql/data/PG_VERSION ]; then' >> /start.sh && \
+    echo '    echo "Initializing PostgreSQL..."' >> /start.sh && \
+    echo '    su-exec postgres initdb -D /var/lib/postgresql/data' >> /start.sh && \
+    echo '    su-exec postgres pg_ctl -D /var/lib/postgresql/data start' >> /start.sh && \
+    echo '    sleep 5' >> /start.sh && \
+    echo '    su-exec postgres createdb braindump' >> /start.sh && \
+    echo '    su-exec postgres psql braindump < /docker-entrypoint-initdb.d/init-fixed.sql' >> /start.sh && \
+    echo '    su-exec postgres pg_ctl -D /var/lib/postgresql/data stop' >> /start.sh && \
+    echo '    sleep 2' >> /start.sh && \
+    echo 'fi' >> /start.sh && \
+    echo '' >> /start.sh && \
+    echo '# Start all services with supervisor' >> /start.sh && \
+    echo 'exec /usr/bin/supervisord -c /etc/supervisord.conf' >> /start.sh
+
+RUN chmod +x /start.sh
+RUN apk add --no-cache su-exec
+
+# Expose ports
+EXPOSE 80 3000
+
+# Start everything
+CMD ["/start.sh"]
