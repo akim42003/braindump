@@ -215,9 +215,34 @@ EOF
     
     log_success "Database initialized"
     
-    # Start application services
-    log_info "Starting application services..."
-    docker-compose -f "$COMPOSE_FILE" up -d backend frontend
+    # Start backend service first for migration
+    log_info "Starting backend service..."
+    docker-compose -f "$COMPOSE_FILE" up -d backend
+    
+    # Wait for backend to be ready
+    log_info "Waiting for backend to be ready..."
+    local backend_count=0
+    while ! curl -f http://localhost:3000/health &>/dev/null; do
+        if [[ $backend_count -ge 30 ]]; then
+            log_warning "Backend not responding after 30 seconds, continuing anyway..."
+            break
+        fi
+        sleep 1
+        ((backend_count++))
+    done
+    
+    # Run Supabase migration
+    log_info "Running Supabase data migration..."
+    if docker-compose -f "$COMPOSE_FILE" exec -T backend node migrate.js; then
+        log_success "Supabase migration completed successfully"
+    else
+        log_warning "Supabase migration failed, but continuing deployment..."
+        log_info "Your posts won't be migrated, but you can add new ones"
+    fi
+    
+    # Start frontend service
+    log_info "Starting frontend service..."
+    docker-compose -f "$COMPOSE_FILE" up -d frontend
     
     log_success "All services started"
 }
