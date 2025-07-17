@@ -33,13 +33,18 @@ log_error() {
 check_services() {
     log_info "Checking if services are running..."
     
-    if ! docker-compose -f "$COMPOSE_FILE" ps | grep -q "backend.*Up"; then
-        log_error "Backend service is not running!"
-        log_info "Please start services first with: docker-compose -f $COMPOSE_FILE up -d"
-        exit 1
+    # Check if backend container exists and is running
+    if ! docker ps --format "table {{.Names}}\t{{.Status}}" | grep -E "backend.*Up|backend.*running"; then
+        log_warning "Backend service might not be running, checking with docker-compose..."
+        # Try another method
+        if ! docker-compose -f "$COMPOSE_FILE" ps --services --filter "status=running" | grep -q "backend"; then
+            log_error "Backend service is not running!"
+            log_info "Please start services first with: docker-compose -f $COMPOSE_FILE up -d"
+            exit 1
+        fi
     fi
     
-    log_success "Services are running"
+    log_success "Backend service is running"
 }
 
 # Run migration
