@@ -11,11 +11,11 @@ docker pull postgres:15-alpine
 
 # Stop existing containers
 echo "Stopping existing containers..."
-docker compose -f docker-compose.prod.yml down
+docker-compose -f docker-compose.prod.yml down
 
 # Start services
 echo "Starting services..."
-docker compose -f docker-compose.prod.yml up -d
+docker-compose -f docker-compose.prod.yml up -d
 
 # Wait for services to be ready
 echo "Waiting for services to start..."
@@ -23,7 +23,7 @@ sleep 20
 
 # Check container status
 echo "Container status..."
-docker compose -f docker-compose.prod.yml ps
+docker-compose -f docker-compose.prod.yml ps
 
 # Check health with more verbose output
 echo "Health check..."
@@ -34,7 +34,7 @@ curl -f http://localhost:1000 && echo "Frontend OK" || echo "Frontend failed"
 
 # Show logs if health checks fail
 echo "Recent logs:"
-docker compose -f docker-compose.prod.yml logs --tail=20
+docker-compose -f docker-compose.prod.yml logs --tail=20
 
 echo "Deployment complete!"
 echo "Frontend: http://localhost:1000"
