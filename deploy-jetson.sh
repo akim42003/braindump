@@ -21,6 +21,21 @@ docker-compose -f docker-compose.prod.yml up -d
 echo "Waiting for services to start..."
 sleep 20
 
+# Initialize database schema
+echo "Initializing database..."
+docker-compose -f docker-compose.prod.yml exec -T postgres psql -U postgres -d braindump <<EOF
+CREATE TABLE IF NOT EXISTS blog_posts (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    category VARCHAR(50) DEFAULT 'thought',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_blog_posts_category ON blog_posts(category);
+CREATE INDEX IF NOT EXISTS idx_blog_posts_created_at ON blog_posts(created_at);
+EOF
+
 # Check container status
 echo "Container status..."
 docker-compose -f docker-compose.prod.yml ps
