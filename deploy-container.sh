@@ -233,11 +233,12 @@ EOF
     
     # Run Supabase migration
     log_info "Running Supabase data migration..."
-    if docker-compose -f "$COMPOSE_FILE" exec -T backend node migrate.js; then
+    if docker-compose -f "$COMPOSE_FILE" exec -T backend node migrate.js 2>/dev/null; then
         log_success "Supabase migration completed successfully"
     else
         log_warning "Supabase migration failed, but continuing deployment..."
         log_info "Your posts won't be migrated, but you can add new ones"
+        log_info "You can run migration manually later with: docker-compose -f $COMPOSE_FILE exec backend node migrate.js"
     fi
     
     # Start frontend service
@@ -333,6 +334,15 @@ main() {
 
 # Handle termination
 cleanup_on_exit() {
+    local exit_code=$?
+    if [[ $exit_code -eq 0 ]]; then
+        log_info "Deployment completed normally"
+    else
+        log_error "Deployment failed with exit code $exit_code"
+        log_info "Checking logs..."
+        docker-compose -f "$COMPOSE_FILE" logs --tail=20
+    fi
+    
     log_info "Shutting down deployment..."
     docker-compose -f "$COMPOSE_FILE" down
     log_info "Deployment stopped"
