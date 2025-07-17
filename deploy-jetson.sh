@@ -14,7 +14,7 @@ echo "Starting only Postgres…"
 $COMPOSE up -d postgres         # or postgres
 
 # Wait for Postgres to accept connections
-until $COMPOSE exec -T db pg_isready -U postgres > /dev/null 2>&1; do
+until $COMPOSE exec -T postgres pg_isready -U postgres > /dev/null 2>&1; do
   sleep 1
 done
 
