@@ -21,7 +21,7 @@ done
 echo "Applying schema…"
 # run with method A or B from above
 docker run --rm -i --network "$($COMPOSE ps -q | xargs docker inspect -f '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}' | head -n1)" \
-       postgres:15-alpine psql -h db -U postgres -d braindump -f /schema.sql
+       postgres:15-alpine psql -h postgres -U postgres -d braindump -f /schema.sql
 
 echo "Starting the rest of the stack…"
 $COMPOSE up -d frontend backend
