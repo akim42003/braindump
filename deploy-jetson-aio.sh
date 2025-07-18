@@ -4,7 +4,7 @@
 
 set -euo pipefail
 
-IMAGE="akim42003/braindump-all-in-one:0.3.0"
+IMAGE="akim42003/braindump-all-in-one:latest"
 
 echo "Deploying Braindump on Jetson Nano..."
 
@@ -18,7 +18,7 @@ docker pull "$IMAGE"
 
 # Run container
 echo "Starting container..."
-docker run -d \
+docker run \
   -p 1000:80 \
   -p 8001:3000 \
   --name braindump \

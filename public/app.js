@@ -1,6 +1,6 @@
 const API_BASE_URL = window.location.hostname === 'localhost' ? 
-  'http://localhost:3000/api' : 
-  `http://${window.location.hostname}:3000/api`;
+  'http://localhost:8001/api' : 
+  `http://${window.location.hostname}:8001/api`;
 
 // 2. DOM refs
 const postsContainer = document.getElementById("posts-container");
