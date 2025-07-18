@@ -18,7 +18,7 @@ docker pull "$IMAGE"
 
 # Run container
 echo "Starting container..."
-docker run \
+docker run -d\
   -p 1000:80 \
   -p 8001:3000 \
   --name braindump \
