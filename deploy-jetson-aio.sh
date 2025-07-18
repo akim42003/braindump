@@ -20,7 +20,7 @@ docker pull "$IMAGE"
 echo "Starting container..."
 docker run -d\
   -p 1000:80 \
-  -p 8001:3000 \
+  -p 8001:8001 \
   --name braindump \
   --restart unless-stopped \
   -v braindump_data:/var/lib/postgresql/data \
