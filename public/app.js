@@ -2,6 +2,17 @@ const API_BASE_URL = window.location.hostname === 'localhost' ?
   'http://localhost:8001/api' : 
   `http://${window.location.hostname}:8001/api`;
 
+// Heartbeat to keep server alive
+setInterval(async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL.replace('/api', '')}/health`);
+    const data = await response.json();
+    console.log('Heartbeat:', data.database);
+  } catch (error) {
+    console.error('Heartbeat failed:', error);
+  }
+}, 45000); // Every 45 seconds
+
 // 2. DOM refs
 const postsContainer = document.getElementById("posts-container");
 const loadMoreBtn = document.getElementById("load-more-btn");
