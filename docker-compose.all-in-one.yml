@@ -4,7 +4,7 @@ services:
   braindump:
     image: akim42003/braindump-all-in-one:0.5.4
     ports:
-      - "8080:80"    # Frontend (nginx) - map port 8080 to container's port 80
+      - "1000:80"    # Frontend (nginx) - map port 1000 to container's port 80
     volumes:
       - braindump_data:/var/lib/postgresql/data
     restart: unless-stopped
