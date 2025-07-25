@@ -1,6 +1,6 @@
 const API_BASE_URL = window.location.hostname === 'localhost' ? 
   'http://localhost:8001/api' : 
-  `http://${window.location.hostname}:8001/api`;
+  `/api`; // Use nginx proxy when not on localhost
 
 // Connection status management
 let connectionStatus = 'unknown';
@@ -42,7 +42,10 @@ function updateConnectionStatus(status) {
 // Enhanced heartbeat with retry logic
 async function sendHeartbeat() {
   try {
-    const response = await fetch(`${API_BASE_URL.replace('/api', '')}/health`, {
+    const healthURL = window.location.hostname === 'localhost' ? 
+      'http://localhost:8001/health' : 
+      '/health'; // Use nginx proxy when not on localhost
+    const response = await fetch(healthURL, {
       method: 'GET',
       timeout: 10000 // 10 second timeout
     });

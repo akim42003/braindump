@@ -2,10 +2,10 @@ version: '3.3'
 
 services:
   braindump:
-    image: akim42003/braindump-all-in-one:0.5.1
+    image: akim42003/braindump-all-in-one:0.5.2
     ports:
       - "80:80"      # Frontend (nginx)
-      - "3000:3000"  # Backend API
+      - "8001:8001"  # Backend API (if you need direct access)
     volumes:
       - braindump_data:/var/lib/postgresql/data
     restart: unless-stopped
