@@ -38,6 +38,7 @@ RUN echo '[supervisord]' > /etc/supervisord.conf && \
     echo 'user=postgres' >> /etc/supervisord.conf && \
     echo 'autostart=true' >> /etc/supervisord.conf && \
     echo 'autorestart=true' >> /etc/supervisord.conf && \
+    echo 'priority=1' >> /etc/supervisord.conf && \
     echo 'stdout_logfile=/dev/stdout' >> /etc/supervisord.conf && \
     echo 'stdout_logfile_maxbytes=0' >> /etc/supervisord.conf && \
     echo 'stderr_logfile=/dev/stderr' >> /etc/supervisord.conf && \
@@ -46,11 +47,12 @@ RUN echo '[supervisord]' > /etc/supervisord.conf && \
     echo '[program:backend]' >> /etc/supervisord.conf && \
     echo 'command=node /app/backend/server.js' >> /etc/supervisord.conf && \
     echo 'directory=/app/backend' >> /etc/supervisord.conf && \
-    echo 'environment=DB_HOST="localhost",DB_USER="postgres",DB_PASSWORD="password",DB_NAME="braindump",DB_PORT="5432"' >> /etc/supervisord.conf && \
+    echo 'environment=DB_HOST="localhost",DB_USER="postgres",DB_PASSWORD="password",DB_NAME="braindump",DB_PORT="5432",PORT="8001"' >> /etc/supervisord.conf && \
     echo 'autostart=true' >> /etc/supervisord.conf && \
     echo 'autorestart=true' >> /etc/supervisord.conf && \
     echo 'startretries=10' >> /etc/supervisord.conf && \
-    echo 'startsecs=15' >> /etc/supervisord.conf && \
+    echo 'startsecs=30' >> /etc/supervisord.conf && \
+    echo 'priority=10' >> /etc/supervisord.conf && \
     echo 'stdout_logfile=/dev/stdout' >> /etc/supervisord.conf && \
     echo 'stdout_logfile_maxbytes=0' >> /etc/supervisord.conf && \
     echo 'stderr_logfile=/dev/stderr' >> /etc/supervisord.conf && \
@@ -60,6 +62,7 @@ RUN echo '[supervisord]' > /etc/supervisord.conf && \
     echo 'command=/usr/sbin/nginx -g "daemon off;"' >> /etc/supervisord.conf && \
     echo 'autostart=true' >> /etc/supervisord.conf && \
     echo 'autorestart=true' >> /etc/supervisord.conf && \
+    echo 'priority=20' >> /etc/supervisord.conf && \
     echo 'stdout_logfile=/dev/stdout' >> /etc/supervisord.conf && \
     echo 'stdout_logfile_maxbytes=0' >> /etc/supervisord.conf && \
     echo 'stderr_logfile=/dev/stderr' >> /etc/supervisord.conf && \
@@ -71,7 +74,8 @@ RUN echo '[supervisord]' > /etc/supervisord.conf && \
     echo 'autostart=true' >> /etc/supervisord.conf && \
     echo 'autorestart=true' >> /etc/supervisord.conf && \
     echo 'startretries=10' >> /etc/supervisord.conf && \
-    echo 'startsecs=5' >> /etc/supervisord.conf && \
+    echo 'startsecs=60' >> /etc/supervisord.conf && \
+    echo 'priority=30' >> /etc/supervisord.conf && \
     echo 'stdout_logfile=/dev/stdout' >> /etc/supervisord.conf && \
     echo 'stdout_logfile_maxbytes=0' >> /etc/supervisord.conf && \
     echo 'stderr_logfile=/dev/stderr' >> /etc/supervisord.conf && \

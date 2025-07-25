@@ -2,7 +2,7 @@ version: '3.3'
 
 services:
   braindump:
-    image: akim42003/braindump-all-in-one:0.5.3
+    image: akim42003/braindump-all-in-one:0.5.4
     ports:
       - "8080:80"    # Frontend (nginx) - map port 8080 to container's port 80
     volumes:
