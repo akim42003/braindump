@@ -14,6 +14,9 @@ COPY backend/package*.json ./
 RUN npm install --production
 COPY backend/ ./
 
+# Copy keep-alive daemon
+COPY keep-alive-daemon.js /app/
+
 # Copy frontend files
 WORKDIR /app/frontend
 COPY public/ ./
@@ -47,7 +50,7 @@ RUN echo '[supervisord]' > /etc/supervisord.conf && \
     echo 'autostart=true' >> /etc/supervisord.conf && \
     echo 'autorestart=true' >> /etc/supervisord.conf && \
     echo 'startretries=10' >> /etc/supervisord.conf && \
-    echo 'startsecs=10' >> /etc/supervisord.conf && \
+    echo 'startsecs=15' >> /etc/supervisord.conf && \
     echo 'stdout_logfile=/dev/stdout' >> /etc/supervisord.conf && \
     echo 'stdout_logfile_maxbytes=0' >> /etc/supervisord.conf && \
     echo 'stderr_logfile=/dev/stderr' >> /etc/supervisord.conf && \
@@ -57,6 +60,18 @@ RUN echo '[supervisord]' > /etc/supervisord.conf && \
     echo 'command=/usr/sbin/nginx -g "daemon off;"' >> /etc/supervisord.conf && \
     echo 'autostart=true' >> /etc/supervisord.conf && \
     echo 'autorestart=true' >> /etc/supervisord.conf && \
+    echo 'stdout_logfile=/dev/stdout' >> /etc/supervisord.conf && \
+    echo 'stdout_logfile_maxbytes=0' >> /etc/supervisord.conf && \
+    echo 'stderr_logfile=/dev/stderr' >> /etc/supervisord.conf && \
+    echo 'stderr_logfile_maxbytes=0' >> /etc/supervisord.conf && \
+    echo '' >> /etc/supervisord.conf && \
+    echo '[program:keepalive]' >> /etc/supervisord.conf && \
+    echo 'command=node /app/keep-alive-daemon.js' >> /etc/supervisord.conf && \
+    echo 'directory=/app' >> /etc/supervisord.conf && \
+    echo 'autostart=true' >> /etc/supervisord.conf && \
+    echo 'autorestart=true' >> /etc/supervisord.conf && \
+    echo 'startretries=10' >> /etc/supervisord.conf && \
+    echo 'startsecs=5' >> /etc/supervisord.conf && \
     echo 'stdout_logfile=/dev/stdout' >> /etc/supervisord.conf && \
     echo 'stdout_logfile_maxbytes=0' >> /etc/supervisord.conf && \
     echo 'stderr_logfile=/dev/stderr' >> /etc/supervisord.conf && \
@@ -71,7 +86,7 @@ RUN echo '#!/bin/sh' > /start.sh && \
     echo '    echo "Initializing PostgreSQL..."' >> /start.sh && \
     echo '    su-exec postgres initdb -D /var/lib/postgresql/data' >> /start.sh && \
     echo '    su-exec postgres pg_ctl -D /var/lib/postgresql/data start' >> /start.sh && \
-    echo '    sleep 5' >> /start.sh && \
+    echo '    sleep 10' >> /start.sh && \
     echo '    su-exec postgres createdb braindump' >> /start.sh && \
     echo '    su-exec postgres psql braindump < /docker-entrypoint-initdb.d/init-fixed.sql' >> /start.sh && \
     echo '    su-exec postgres pg_ctl -D /var/lib/postgresql/data stop' >> /start.sh && \

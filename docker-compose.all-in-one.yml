@@ -2,7 +2,7 @@ version: '3.3'
 
 services:
   braindump:
-    image: akim42003/braindump-all-in-one:0.4.0
+    image: akim42003/braindump-all-in-one:0.5.1
     ports:
       - "80:80"      # Frontend (nginx)
       - "3000:3000"  # Backend API
