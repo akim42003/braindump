@@ -50,8 +50,39 @@ if docker ps | grep -q braindump; then
             if docker exec braindump sh -c "cd /app/backend && SUPABASE_URL='${SUPABASE_URL}' SUPABASE_ANON_KEY='${SUPABASE_ANON_KEY}' node migrate.js"; then
                 echo "Supabase migration completed successfully!"
             else
-                echo "Migration failed, but blog is still running"
-                echo "You can run migration manually later"
+                echo "Migration failed, attempting to restore from latest backup..."
+                
+                # Find the latest backup
+                BACKUP_DIR="/home/alex/braindump-backups"
+                LATEST_BACKUP=$(ls -t "$BACKUP_DIR"/db_backup_*.sql 2>/dev/null | head -1)
+                
+                if [ -n "$LATEST_BACKUP" ] && [ -f "$LATEST_BACKUP" ]; then
+                    echo "Found backup: $LATEST_BACKUP"
+                    echo "Restoring database from backup..."
+                    
+                    # Stop container, restore volume from backup, restart
+                    docker stop braindump
+                    
+                    # Find latest volume backup
+                    LATEST_VOLUME_BACKUP=$(ls -t "$BACKUP_DIR"/volume_backup_*.tar.gz 2>/dev/null | head -1)
+                    
+                    if [ -n "$LATEST_VOLUME_BACKUP" ] && [ -f "$LATEST_VOLUME_BACKUP" ]; then
+                        echo "Restoring volume from: $LATEST_VOLUME_BACKUP"
+                        docker run --rm -v braindump_data:/data -v "$BACKUP_DIR":/backup alpine \
+                            sh -c "rm -rf /data/* && tar xzf /backup/$(basename "$LATEST_VOLUME_BACKUP") -C /data"
+                        
+                        # Restart container
+                        docker start braindump
+                        sleep 20
+                        
+                        echo "Database restored from backup successfully!"
+                    else
+                        echo "No volume backup found, starting with empty database"
+                        docker start braindump
+                    fi
+                else
+                    echo "No database backup found, continuing with migration failure"
+                fi
             fi
         else
             echo "No Supabase credentials found in .env file"

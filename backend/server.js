@@ -175,12 +175,24 @@ app.get('/health', async (req, res) => {
     console.error('Health check database error:', error.message);
   }
   
-  // Check memory usage
+  // Check memory usage with more aggressive thresholds
   const memUsage = process.memoryUsage();
   const heapUsedMB = memUsage.heapUsed / 1024 / 1024;
-  if (heapUsedMB > 500) { // Alert if using more than 500MB
+  const rssUsedMB = memUsage.rss / 1024 / 1024;
+  
+  health.memoryUsageMB = {
+    heap: Math.round(heapUsedMB),
+    rss: Math.round(rssUsedMB),
+    external: Math.round(memUsage.external / 1024 / 1024)
+  };
+  
+  if (heapUsedMB > 400 || rssUsedMB > 800) { // More aggressive limits for Jetson
+    health.checks.memory = 'critical';
+    health.status = 'DEGRADED';
+    console.warn(`HIGH MEMORY USAGE: Heap=${Math.round(heapUsedMB)}MB, RSS=${Math.round(rssUsedMB)}MB`);
+  } else if (heapUsedMB > 300 || rssUsedMB > 600) {
     health.checks.memory = 'warning';
-    health.memoryUsageMB = Math.round(heapUsedMB);
+    console.warn(`Memory warning: Heap=${Math.round(heapUsedMB)}MB, RSS=${Math.round(rssUsedMB)}MB`);
   } else {
     health.checks.memory = 'healthy';
   }
@@ -222,7 +234,25 @@ setInterval(async () => {
       attemptReconnection();
     }
   }
-}, 10000); // Every 10 seconds to ensure connection never drops
+}, 30000); // Every 30 seconds - less aggressive
+
+// Memory monitoring and garbage collection every 5 minutes
+setInterval(() => {
+  const memUsage = process.memoryUsage();
+  const heapUsedMB = memUsage.heapUsed / 1024 / 1024;
+  const rssUsedMB = memUsage.rss / 1024 / 1024;
+  
+  console.log(`Memory check: Heap=${Math.round(heapUsedMB)}MB, RSS=${Math.round(rssUsedMB)}MB, Uptime=${Math.round(process.uptime())}s`);
+  
+  // Force garbage collection if memory is high and gc is available
+  if (global.gc && (heapUsedMB > 300 || rssUsedMB > 600)) {
+    console.log('Forcing garbage collection due to high memory usage');
+    global.gc();
+  }
+  
+  // Log connection pool stats
+  console.log(`DB Pool: Total=${pool.totalCount}, Idle=${pool.idleCount}, Waiting=${pool.waitingCount}`);
+}, 600000); // Every 10 minutes
 
 // Graceful shutdown
 process.on('SIGTERM', async () => {

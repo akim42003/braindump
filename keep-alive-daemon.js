@@ -4,7 +4,7 @@ const http = require('http');
 // This runs as a separate process and continuously pings the server
 
 const BACKEND_URL = 'http://localhost:8001/health';
-const PING_INTERVAL = 5000; // 5 seconds - very aggressive
+const PING_INTERVAL = 60000; // 60 seconds - less aggressive
 
 console.log('Keep-alive daemon started');
 
