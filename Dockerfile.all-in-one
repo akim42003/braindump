@@ -1,5 +1,5 @@
 # All-in-one Dockerfile for Braindump
-FROM node:18-alpine
+FROM --platform=linux/amd64/v2 node:18-alpine
 
 # Install nginx and postgresql
 RUN apk add --no-cache nginx postgresql postgresql-client supervisor

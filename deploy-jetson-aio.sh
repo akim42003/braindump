@@ -86,15 +86,21 @@ if docker ps | grep -q braindump; then
             fi
         else
             echo "No Supabase credentials found in .env file"
+            read -p "Do you want to migrate data from Supabase? (y/N): " SUPABASE_MIGRATE
+            if [ "$SUPABASE_MIGRATE" = "y" ] || [ "$SUPABASE_MIGRATE" = "Y" ]; then
+                echo "To migrate data, create .env file with:"
+                echo "SUPABASE_URL=your_supabase_url"
+                echo "SUPABASE_ANON_KEY=your_supabase_anon_key"
+            fi
+        fi
+    else
+        echo "No .env file found for Supabase migration"
+        read -p "Do you want to migrate data from Supabase? (y/N): " SUPABASE_MIGRATE
+        if [ "$SUPABASE_MIGRATE" = "y" ] || [ "$SUPABASE_MIGRATE" = "Y" ]; then
             echo "To migrate data, create .env file with:"
             echo "SUPABASE_URL=your_supabase_url"
             echo "SUPABASE_ANON_KEY=your_supabase_anon_key"
         fi
-    else
-        echo "No .env file found for Supabase migration"
-        echo "To migrate data, create .env file with:"
-        echo "SUPABASE_URL=your_supabase_url"
-        echo "SUPABASE_ANON_KEY=your_supabase_anon_key"
     fi
 
     echo ""
