@@ -14,11 +14,12 @@ docker rm braindump 2>/dev/null || true
 
 # Pull latest image
 echo "Pulling image..."
-docker pull "$IMAGE"
+docker pull --platform linux/amd64 "$IMAGE"
 
 # Run container
 echo "Starting container..."
 docker run -d\
+  --platform linux/amd64 \
   -p 1000:80 \
   -p 8001:8001 \
   --name braindump \
