@@ -4,7 +4,7 @@
 
 set -euo pipefail
 
-IMAGE="akim42003/braindump-all-in-one:latest"
+IMAGE="akim42003/braindump-all-in-one:amd64"
 
 echo "Deploying Braindump on Jetson Nano..."
 
