@@ -13,4 +13,4 @@ I needed to offload my thoughts on tech, science, and programming. Engineered wi
 
 Sometimes you just want to write words without fighting webpack configs or debating which state management library will be deprecated next week.
 
-Built for an audience of me, deployed to a network of my apple eco system plus those pesky edge devices and my Ubuntu AI monster PC.
+Built for an audience of me, deployed to a network of my apple eco system plus those pesky edge devices and my Ubuntu cuda monster PC.
